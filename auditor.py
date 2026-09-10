@@ -8,24 +8,30 @@ while True:
     print ("Please enter 1 to input your stock quantity")
     print ("Please enter 0 to exit the program")
     choice = (input("Enter your Choice here  "))
-    if not choice.isdigit():
+    if not choice.isdigit() or int(choice) < 0:
         print("Error: Please enter a valid number.")
         failed += 1
+        continue
 
     choice = int(choice)
 
     if choice == 2:
         print (inventory)
 
-    if choice == 1:
+    elif choice == 1:
         stock = (input("Please enter the stock amount"))
+        if not stock.isdigit() or int(choice) < 0:
+            print ("Error, Please enter a valid number")
+            failed += 1
+            continue
         stock = int(stock)
         inventory = inventory + stock
 
-    if choice == 0:
+    elif choice == 0:
         print (inventory)
+        print ("Number of failed entries  ",failed)
         break
 
-    if inventory > 500:
+    elif inventory > 500:
         print ("Error, Current inventory amount exceeded 500")
         break

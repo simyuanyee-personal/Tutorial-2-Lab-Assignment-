@@ -2,6 +2,32 @@
 inventory = 0
 failed = 0
 
+def process_delivery(current_total, new_value):
+    new_total = current_total + new_value
+    return new_total
+
+def get_valid_input():
+    print("===================")
+    print("Please enter 2 to view current inventory amount")
+    print("Please enter 1 to input your stock quantity")
+    print("Please enter 0 to exit the program")
+
+    choice = input("Enter your choice here: ")
+
+    # Data validation
+    if not choice.isdigit():
+        print("Error: Please enter a valid number.")
+        return None
+
+    choice = int(choice)
+
+    # Check whether choice is one of the valid options
+    if choice not in [0, 1, 2]:
+        print("Error: Please enter 0, 1, or 2.")
+        return None
+
+    return choice
+    
 #Created the infinite loop for the main menu for user to interact with 
 while True:
     print ("===================")

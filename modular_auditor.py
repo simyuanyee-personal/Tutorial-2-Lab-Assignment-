@@ -1,12 +1,8 @@
-#Set Inventory as 0 and also set Failed as 0 to record all the failed attempts
-inventory = 0
-failed = 0
 
 def get_valid_input():
     #Created the infinite loop for the main menu for user to interact with 
     while True:
         print("===================")
-        print("Please enter 2 to view current inventory amount")
         print("Please enter 1 to input your stock quantity")
         print("Please enter 0 to exit the program")
 
@@ -21,8 +17,8 @@ def get_valid_input():
         choice = int(choice)
 
     # Check whether choice is one of the valid options
-        if choice not in [0, 1, 2]:
-            print("Error: Please enter 0, 1, or 2.")
+        if choice not in [0, 1]:
+            print("Error: Please enter 0 or 1.")
             failed += 1
             return None
 
@@ -46,21 +42,37 @@ def generate_report(total_units, failed_attempts):
 
 
 def main():
-    
+    inventory = 0
+    failed = 0
+
 #Created the infinite loop for the main menu for user to interact with 
     while True:
         choice = get_valid_input()
+        if choice is None:
+            failed += 1
+            print ("Error: Please enter a valid number.")
+            continue
+
+
         if choice == 1:
             stock = input("Please enter the stock amount: ")
-            process_delivery(inventory, int(stock))
-            calculate_tax(new_total)
+
             if not stock.isdigit() or int(stock) < 0:
                 print("Error: Please enter a valid number.")
                 failed += 1
                 continue
+
+            stock =int(stock)
+            new_stock= process_delivery(inventory, stock)
+            tax = calculate_tax(new_stock)
+            inventory = new_stock  # Update the inventory with the new stock amount
+            print(f"Current inventory amount: {inventory}")
+            print (f"Tax amount: {tax}")
             continue
 
         elif choice == 0:
             generate_report(inventory, failed)
             print("Exiting the program. Goodbye!")
             break
+
+main()

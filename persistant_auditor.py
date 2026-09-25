@@ -1,100 +1,158 @@
-Inventory_File="inventory.txt"
+Inventory_File = "inventory.txt"
+
 
 def load_inventory():
     try:
         with open(Inventory_File, "r") as file:
-            inventory = int(file.read())
-            return inventory
+            inventory_list = file.read().strip()
+
+            if inventory_list:
+                return [
+                    (int(inventory_id), item, int(stock))
+                    for inventory_id, item, stock in
+                    [line.split(',') for line in inventory_list.split('\n') if line]
+                ]
+            else:
+                return []
+
     except FileNotFoundError:
-        return 0  # If the file doesn't exist, start with 0 inventory
-    except ValueError:
-        print("Error: Inventory file is corrupted. Starting with 0 inventory.")
-        return 0
+        return []
+
+    except (ValueError, IndexError):
+        print("Error: Inventory file is corrupted. Starting with empty inventory.")
+        return []
+
 
 def save_inventory(inventory):
     with open(Inventory_File, "w") as file:
-        file.write(str(inventory))
+        for inventory_id, item, stock in inventory:
+            file.write(f"{inventory_id},{item},{stock}\n")
 
 
 def get_valid_input():
-    #Created the infinite loop for the main menu for user to interact with 
     while True:
         print("===================")
         print("Please enter 2 to view current inventory amount")
-        print("Please enter 1 to input your stock quantity")
+        print("Please enter 1 to input your transaction")
         print("Please enter 0 to exit the program")
 
         choice = input("Enter your choice here: ")
 
-    # Data validation to ensure the user user enters a valid number 
+        # Data validation
         if not choice.isdigit():
             print("Error: Please enter a valid number.")
-            return None
+            continue
 
         choice = int(choice)
 
-    # Check whether choice is one of the valid options
+        # Check valid options
         if choice not in [0, 1, 2]:
             print("Error: Please enter 0, 1, or 2.")
-            return None
+            continue
 
         return choice
 
-#Added a function to process the delivery and calculate the new total inventory
+
 def process_delivery(current_total, new_value):
     new_total = current_total + new_value
     return new_total
 
-#Added a function to calculate the tax amount based on the total inventory
-def calculate_tax(amount):
-    tax_rate = 0.10  # 10% tax rate
-    tax_amount = amount * tax_rate
-    return tax_amount
 
-#Added a function to generate a report of the total units and failed attempts
-def generate_report(total_units, failed_attempts):
+def generate_report(failed_attempts):
     print("===================")
     print("Inventory Report")
     print("===================")
-    print(f"Total Units: {total_units}")
     print(f"Failed Attempts: {failed_attempts}")
 
-#Added a main function to run the program and handle user input
+
 def main():
-    inventory = load_inventory()
+    inventory_list = load_inventory()
     failed = 0
 
-#Created the infinite loop for the main menu for user to interact with 
     while True:
         choice = get_valid_input()
 
-        if choice is 2:
-            print(f"Current inventory amount: {inventory}")
-            continue    
+        # View inventory
+        if choice == 2:
+            print("Current inventory:")
 
-#Added a conditional statement to check the user input and process the delivery or exit the program
+            if not inventory_list:
+                print("Inventory is empty.")
+            else:
+                for inventory_id, item, stock in inventory_list:
+                    print(f"  ID: {inventory_id} | {item}: {stock}")
+
+            continue
+
+        # Add transaction
         if choice == 1:
-            stock = input("Please enter the stock amount: ")
+            item = input("Please enter the item name: ")
+            quantity = input("Please enter the amount for the item: ")
 
-            if not stock.isdigit() or int(stock) < 0:
+            if not quantity.isdigit() or int(quantity) < 0:
                 print("Error: Please enter a valid number.")
                 failed += 1
                 continue
 
-#Added a the ability for user to input their stock amount and process the delivery and calculate the tax amount
-            stock =int(stock)
-            new_stock= process_delivery(inventory, stock)
-            tax = calculate_tax(new_stock)
-            inventory = new_stock  # Update the inventory with the new stock amount
-            print(f"Current inventory amount: {inventory}")
-            print(f"Tax amount: {tax}")
+            quantity = int(quantity)
+
+            # Check whether item already exists
+            item_found = False
+
+            for i in range(len(inventory_list)):
+
+                inventory_id, existing_item, current_stock = inventory_list[i]
+
+                if existing_item.lower() == item.lower():
+
+                    new_stock = process_delivery(
+                        current_stock,
+                        quantity
+                    )
+
+                    inventory_list[i] = (
+                        inventory_id,
+                        existing_item,
+                        new_stock
+                    )
+
+                    item_found = True
+                    break
+
+            # If item doesn't exist, add it
+            if not item_found:
+
+                if inventory_list:
+                    new_id = max(
+                        inventory_id
+                        for inventory_id, item, stock in inventory_list
+                    ) + 1
+                else:
+                    new_id = 1
+
+                new_stock = process_delivery(0, quantity)
+
+                inventory_list.append(
+                    (new_id, item, new_stock)
+                )
+
+                print(f"New item added with ID: {new_id}")
+
+            print(f"Current inventory: {inventory_list}")
+
             continue
-#If the user enters 0, the program will generate a report and exit the program
+
+        # Exit
         elif choice == 0:
-            save_inventory(inventory)
-            generate_report(inventory, failed)
+            save_inventory(inventory_list)
+
+            generate_report(failed)
+
+            print("===================")
+            print("Thank you for using the inventory management system.")
             print("Program Exited.")
+
             break
-        
-#Main function is called to run the program
+
+
 main()

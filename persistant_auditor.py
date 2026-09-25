@@ -1,8 +1,26 @@
+Inventory_File="inventory.txt"
+
+def load_inventory():
+    try:
+        with open(Inventory_File, "r") as file:
+            inventory = int(file.read())
+            return inventory
+    except FileNotFoundError:
+        return 0  # If the file doesn't exist, start with 0 inventory
+    except ValueError:
+        print("Error: Inventory file is corrupted. Starting with 0 inventory.")
+        return 0
+
+def save_inventory(inventory):
+    with open(Inventory_File, "w") as file:
+        file.write(str(inventory))
+
 
 def get_valid_input():
     #Created the infinite loop for the main menu for user to interact with 
     while True:
         print("===================")
+        print("Please enter 2 to view current inventory amount")
         print("Please enter 1 to input your stock quantity")
         print("Please enter 0 to exit the program")
 
@@ -16,8 +34,8 @@ def get_valid_input():
         choice = int(choice)
 
     # Check whether choice is one of the valid options
-        if choice not in [0, 1]:
-            print("Error: Please enter 0 or 1.")
+        if choice not in [0, 1, 2]:
+            print("Error: Please enter 0, 1, or 2.")
             return None
 
         return choice
@@ -43,12 +61,16 @@ def generate_report(total_units, failed_attempts):
 
 #Added a main function to run the program and handle user input
 def main():
-    inventory = 0
+    inventory = load_inventory()
     failed = 0
 
 #Created the infinite loop for the main menu for user to interact with 
     while True:
         choice = get_valid_input()
+
+        if choice is 2:
+            print(f"Current inventory amount: {inventory}")
+            continue    
 
 #Added a conditional statement to check the user input and process the delivery or exit the program
         if choice == 1:
@@ -69,6 +91,7 @@ def main():
             continue
 #If the user enters 0, the program will generate a report and exit the program
         elif choice == 0:
+            save_inventory(inventory)
             generate_report(inventory, failed)
             print("Program Exited.")
             break

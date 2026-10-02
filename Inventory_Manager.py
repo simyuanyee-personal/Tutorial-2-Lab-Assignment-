@@ -23,12 +23,12 @@ def load_inventory():
         return []
 
 
-
 def save_inventory(inventory):
     """Write the inventory list to inventory.json."""
     with open(Inventory_File, "w") as file:
         json.dump(inventory, file, indent=4)
     print("Inventory saved successfully!")
+
 
 def show_menu():
     print("\n----------- MENU -----------")
@@ -40,42 +40,66 @@ def show_menu():
     print("6. Exit")
     print("----------------------------")
 
+def search_product(inventory, query):
+    """Return the product whose ID or name matches query (case-insensitive), else None."""
+    query = query.strip().lower()
+    for product in inventory:
+        if product["id"].lower() == query or product["name"].lower() == query:
+            return product
+    return None
+
+def add_product(inventory, product_id, name, price, stock):
+    """Add a new product. Returns False if the ID is already in use."""
+    if search_product(inventory, product_id) is not None:
+        return False
+
+    product = {
+        "id": product_id,
+        "name": name,
+        "price": price,
+        "stock": stock,
+        "history": [stock],  # every transaction amount is recorded here
+    }
+    inventory.append(product)
+    return True
+
+def update_stock(inventory, product_id, amount):
+    """Apply a transaction (+ delivery, - sale) to a product found by ID.
+    Returns False if not found or stock would drop below zero."""
+    product = search_product(inventory, product_id)
+    if product is None or product["stock"] + amount < 0:
+        return False
+
+    product["stock"] += amount
+    product["history"].append(amount)
+    return True
+
+def display_all(inventory):
+    """Print every product."""
+    print("\nCurrent Inventory")
+    print("-" * 47)
+    if not inventory:
+        print("Inventory is empty.")
+    for p in inventory:
+        print(f"ID: {p['id']} | Name: {p['name']} | "
+              f"Price: ${p['price']:.2f} | Stock: {p['stock']}")
+    print("-" * 47)
+
+def get_number(prompt, number_type, allow_negative=False):
+    """Return a number of number_type (int or float), or None if invalid."""
+    try:
+        value = number_type(input(prompt).strip())
+    except ValueError:
+        return None
+    if value < 0 and not allow_negative:
+        return None
+    return value
 
 
-def get_valid_input():
-    while True:
-        print("===================")
-        print("Please enter 2 to view current inventory amount")
-        print("Please enter 1 to input your transaction")
-        print("Please enter 0 to exit the program")
-
-        choice = input("Enter your choice here: ")
-
-        # Data validation
-        if not choice.isdigit():
-            print("Error: Please enter a valid number.")
-            continue
-
-        choice = int(choice)
-
-        # Check valid options
-        if choice not in [0, 1, 2]:
-            print("Error: Please enter 0, 1, or 2.")
-            continue
-
-        return choice
 
 
-def process_delivery(current_total, new_value):
-    new_total = current_total + new_value
-    return new_total
 
 
-def generate_report(failed_attempts):
-    print("===================")
-    print("Inventory Report")
-    print("===================")
-    print(f"Failed Attempts: {failed_attempts}")
 
 
 def main():

@@ -96,99 +96,77 @@ def get_number(prompt, number_type, allow_negative=False):
     return value
 
 
-
-
-
-
-
-
 def main():
-    inventory_list = load_inventory()
-    failed = 0
+    print("=" * 40)
+    print("INVENTORY MANAGEMENT SYSTEM")
+    print("=" * 40)
+    print()
+
+    inventory = load_inventory()
 
     while True:
-        choice = get_valid_input()
+        show_menu()
+        option = input("\nEnter option: ").strip()
 
-        # View inventory
-        if choice == 2:
-            print("Current inventory:")
+        if option == "1":
+            display_all(inventory)
 
-            if not inventory_list:
-                print("Inventory is empty.")
-            else:
-                for inventory_id, item, stock in inventory_list:
-                    print(f"  ID: {inventory_id} | {item}: {stock}")
-
-            continue
-
-        # Add transaction
-        if choice == 1:
-            item = input("Please enter the item name: ")
-            quantity = input("Please enter the amount for the item: ")
-
-            if not quantity.isdigit() or int(quantity) < 0:
-                print("Error: Please enter a valid number.")
-                failed += 1
+        elif option == "2":
+            print("\nAdd New Product")
+            product_id = input("Product ID: ").strip()
+            name = input("Product Name: ").strip()
+            if not product_id or not name:
+                print("\nError: Product ID and name cannot be empty.")
                 continue
+            price = get_number("Price: ", float)
+            stock = get_number("Stock Quantity: ", int)
+            if price is None or stock is None:
+                print("\nError: Price and stock must be valid non-negative numbers.")
+                continue
+            if add_product(inventory, product_id, name, price, stock):
+                print("\nProduct added successfully!")
+            else:
+                print(f"\nError: Product ID '{product_id}' already exists.")
 
-            quantity = int(quantity)
+        elif option == "3":
+            print("\nUpdate Stock")
+            product_id = input("Product ID: ").strip()
+            amount = get_number(
+                "Amount (positive = delivery, negative = sale): ",
+                int,
+                allow_negative=True,
+            )
+            if amount is None:
+                print("\nError: Please enter a valid whole number.")
+                continue
+            if update_stock(inventory, product_id, amount):
+                print("\nStock updated successfully!")
+            else:
+                print("\nError: Product not found, or stock would drop below zero.")
 
-            # Check whether item already exists
-            item_found = False
+        elif option == "4":
+            print("\nSearch Product")
+            query = input("Enter Product ID or Name: ")
+            product = search_product(inventory, query)
+            if product:
+                print("\nProduct found:")
+                print(f"ID: {product['id']} | Name: {product['name']} | "
+                      f"Price: ${product['price']:.2f} | Stock: {product['stock']}")
+                print(f"Transaction history: {product['history']}")
+            else:
+                print("\nProduct not found.")
 
-            for i in range(len(inventory_list)):
+        elif option == "5":
+            save_inventory(inventory)
 
-                inventory_id, existing_item, current_stock = inventory_list[i]
-
-                if existing_item.lower() == item.lower():
-
-                    new_stock = process_delivery(
-                        current_stock,
-                        quantity
-                    )
-
-                    inventory_list[i] = (
-                        inventory_id,
-                        existing_item,
-                        new_stock
-                    )
-
-                    item_found = True
-                    break
-
-            # If item doesn't exist, add it
-            if not item_found:
-
-                if inventory_list:
-                    new_id = max(
-                        inventory_id
-                        for inventory_id, item, stock in inventory_list
-                    ) + 1
-                else:
-                    new_id = 1
-
-                new_stock = process_delivery(0, quantity)
-
-                inventory_list.append(
-                    (new_id, item, new_stock)
-                )
-
-
-            print(f"Current inventory: {inventory_list}")
-
-            continue
-
-        # Exit
-        elif choice == 0:
-            save_inventory(inventory_list)
-
-            generate_report(failed)
-
-            print("===================")
-            print("Thank you for using the inventory management system.")
+        elif option == "6":
+            save_inventory(inventory)
+            print("\nThank you for using the Inventory Management System.")
             print("Program Exited.")
-
             break
+
+        else:
+            print("\nError: Please enter a number from 1 to 6.")
 
 
 main()

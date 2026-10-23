@@ -1,14 +1,8 @@
-import json
-import os
-
-from product import Product
-
-
 class Inventory:
     """Manages a collection of Product objects.
 
-    Responsibility: store, add, find, remove and display products, and
-    load/save them from/to a JSON file. It does not read user input.
+    Responsibility (SRP): store, add, find, remove and display products.
+    It does not read user input or touch files.
     """
 
     def __init__(self):
@@ -65,4 +59,3 @@ class Inventory:
     def get_products(self):
         """Return a copy of the product list (so callers can't change the original list)."""
         return list(self.__products)
-

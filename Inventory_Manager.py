@@ -3,34 +3,106 @@ import os
 
 Inventory_file = "inventory.json"
 
+class Inventory:
+        """Manages a collection of Product objects.
+ 
+    Responsibility (SRP): store, add, find, remove and display products.
+    It does not read user input or touch files.
+    """
+ 
+    def __init__(self):
+        self.__products = []
+ 
+    def generate_product_id(self):
+        """Return the next ID in the form P001, P002, ... based on the highest existing one."""
+        numbers = []
+        for product in self.__products:
+            digits = product.get_product_id()[1:]
+            if digits.isdigit():
+                numbers.append(int(digits))
+        return f"P{max(numbers, default=0) + 1:03d}"
+ 
+    def add_product(self, product):
+        """Store a Product object in the inventory."""
+        self.__products.append(product)
+ 
+    def search_product(self, query):
+        """Return the product whose ID or name matches query, else None."""
+        for product in self.__products:
+            if product.matches(query):
+                return product
+        return None
+ 
+    def delete_product(self, product_name):
+        """Delete a product by name/ID. Returns True if deleted, False if not found."""
+        product = self.search_product(product_name)
+        if product is None:
+            return False
+        self.__products.remove(product)
+        return True
+ 
+    def update_stock(self, product_name, amount):
+        """Apply a stock transaction to a product found by name/ID.
+ 
+        Returns False if not found or stock would drop below zero.
+        """
+        product = self.search_product(product_name)
+        if product is None:
+            return False
+        return product.update_stock(amount)
+ 
+    def display_all(self):
+        """Print every product."""
+        print("\nCurrent Inventory")
+        print("-" * 47)
+        if not self.__products:
+            print("Inventory is empty.")
+        for product in self.__products:
+            product.display_information()
+        print("-" * 47)
+ 
+    def get_products(self):
+        """Return a copy of the product list (so callers can't change the original list)."""
+        return list(self.__products)
+
+class Product:
+    def __init__(self, product_id, name, price, stock):
+        self.__product_id = product_id
+        self.__name = name
+        self.__price = price
+        self.__stock = stock
+
+    def get_product_id(self):
+        return self.__product_id
+
+    def get_name(self):
+        return self.__name
+
+    def get_price(self):
+        return self.__price
+
+    def get_stock(self):
+        return self.__stock
+
+    def matches(self, query):
+        query = query.strip().lower()
+        return (self.__product_id.lower() == query or
+                self.__name.lower() == query)
+
+    def update_stock(self, amount):
+        if self.__stock + amount < 0:
+            return False
+        self.__stock += amount
+        return True
+
+    def display_information(self):
+        print(f"ID: {self.__product_id} | Name: {self.__name} | "
+              f"Price: ${self.__price:.2f} | Stock: {self.__stock}")
 
 # ---------------------------------------------------------------
 # Data persistence
 # ---------------------------------------------------------------
-def load_inventory():
-    """Load inventory.json if it exists, otherwise begin with an empty inventory."""
-    if not os.path.exists(Inventory_file):
-        print(f"{Inventory_file} not found. Starting with an empty inventory.")
-        return []
 
-    print(f"{Inventory_file} found.")
-    try:
-        with open(Inventory_file, "r") as file:
-            data = json.load(file)
-        if not isinstance(data, list):
-            raise ValueError("Unexpected file structure")
-        print("Inventory loaded successfully.")
-        return data
-    except (json.JSONDecodeError, ValueError):
-        print("Error: Inventory file is corrupted. Starting with an empty inventory.")
-        return []
-
-
-def save_inventory(inventory):
-    """Write the inventory list to inventory.json."""
-    with open(Inventory_file, "w") as file:
-        json.dump(inventory, file, indent=4)
-    print("Inventory saved successfully!")
 
 
 # ---------------------------------------------------------------

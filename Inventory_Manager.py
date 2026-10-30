@@ -1,9 +1,15 @@
 import json
 import os
 from Inventory import Inventory
-from Product import Product
+from PhysicalProduct import PhysicalProduct
+from DigitalProduct import DigitalProduct
+from Shipping import Shipping
 
 Inventory_file = "inventory.json"
+
+# Maps the "type" identifier stored in the JSON file to the class that rebuilds it.
+# To support a new product type, add its class here (each class sets PRODUCT_TYPE).
+PRODUCT_TYPES = {cls.PRODUCT_TYPE: cls for cls in (PhysicalProduct, DigitalProduct)}
 
 
 # ---------------------------------------------------------------
@@ -24,8 +30,9 @@ def load_inventory():
 
         inventory = Inventory()
         for item in data:
-            product = Product(item["id"], item["name"], item["price"], item["stock"])
-            inventory.add_product(product)
+            # Records saved before Lab 7 have no "type"; they were all physical goods.
+            product_class = PRODUCT_TYPES[item.get("type", "physical")]
+            inventory.add_product(product_class.from_dict(item))
         print("Inventory loaded successfully.")
         return inventory
     except (json.JSONDecodeError, ValueError, KeyError, TypeError):
@@ -34,15 +41,8 @@ def load_inventory():
 
 
 def save_inventory(inventory):
-    """Convert the Product objects to dictionaries and write them to inventory.json."""
-    data = []
-    for product in inventory.get_products():
-        data.append({
-            "id": product.get_product_id(),
-            "name": product.get_name(),
-            "price": product.get_price(),
-            "stock": product.get_stock(),
-        })
+    """Convert each product to a dictionary (including its type) and write to inventory.json."""
+    data = [product.to_dict() for product in inventory.get_products()]
     with open(Inventory_file, "w") as file:
         json.dump(data, file, indent=4)
     print("Inventory saved successfully!")
@@ -60,6 +60,34 @@ def get_number(prompt, number_type, allow_negative=False):
     if value < 0 and not allow_negative:
         return None
     return value
+
+
+def create_product(product_id, name, price, stock):
+    """Ask which type of product to add, collect its extra detail and build it.
+
+    Returns a PhysicalProduct / DigitalProduct, or None if the input was invalid.
+    """
+    print("\nProduct Type")
+    print("1. Physical Product")
+    print("2. Digital Product")
+    choice = input("Choose type: ").strip()
+
+    if choice == "1":
+        weight = get_number("Weight (kg): ", float)
+        if weight is None:
+            print("\nError: Weight must be a valid non-negative number.")
+            return None
+        return PhysicalProduct(product_id, name, price, stock, weight)
+
+    if choice == "2":
+        download_size = get_number("Download Size (MB): ", float)
+        if download_size is None:
+            print("\nError: Download size must be a valid non-negative number.")
+            return None
+        return DigitalProduct(product_id, name, price, stock, download_size)
+
+    print("\nError: Please choose 1 or 2.")
+    return None
 
 
 def show_menu():
@@ -101,7 +129,9 @@ def main():
                 print("\nError: Price and stock must be valid non-negative numbers.")
                 continue
             new_id = inventory.generate_product_id()
-            product = Product(new_id, name, price, stock)
+            product = create_product(new_id, name, price, stock)
+            if product is None:
+                continue
             inventory.add_product(product)
             print(f"\nProduct added successfully! Assigned ID: {new_id}")
 
@@ -136,6 +166,9 @@ def main():
             if product:
                 print("\nProduct found:")
                 product.display_information()
+                print(f"    Fulfilment: {product.get_fulfilment_info()}")
+                if isinstance(product, CanBeShipped):
+                    print(f"    Shipping cost: ${product.calculate_shipping_cost():.2f}")
             else:
                 print("\nProduct not found.")
 
